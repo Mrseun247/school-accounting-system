@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Portal - School Accounting System</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; }
+        h2 { color: #444; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin: 25px 0 20px 0; }
+        .portal-badge {
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .login-section, .dashboard-section { display: none; }
+        .login-section.active, .dashboard-section.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #e1e5e9; 
+            border-radius: 6px; 
+            font-size: 14px; 
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            font-size: 14px;
+        }
+        button:hover { background: #5568d3; }
+        button.logout { background: #dc3545; margin-top: 20px; }
+        .success-msg { color: #28a745; font-weight: 600; margin: 10px 0; }
+        .error-msg { color: #dc3545; font-weight: 600; margin: 10px 0; }
+        .info-msg { color: #17a2b8; font-weight: 600; margin: 10px 0; }
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .info-card h3 { color: #667eea; margin-bottom: 15px; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { font-weight: 600; color: #555; }
+        .info-value { color: #333; }
+        .balance-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .balance-amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+        th { background: #f8f9fa; font-weight: 600; }
+        .status-paid { color: #28a745; font-weight: 600; }
+        .status-partial { color: #ffc107; font-weight: 600; }
+        .status-unpaid { color: #dc3545; font-weight: 600; }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h1 { font-size: 1.5em; }
+            .balance-amount { font-size: 28px; }
+            table { font-size: 12px; }
+            th, td { padding: 8px 4px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SECTION -->
+    <div class="container" id="login-container">
+        <div class="login-section active">
+            <h1>👨‍👩‍👧‍👦 Parent Portal</h1>
+            <div class="portal-badge">School Accounting System</div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Parent Phone Number</label>
+                    <input type="tel" id="parent-phone" placeholder="08012345678" required>
+                    <small style="color: #6c757d;">Enter the phone number registered with your child's account</small>
+                </div>
+                <button type="submit">Login</button>
+                <div id="login-message"></div>
+            </form>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #e8f5e8; border-radius: 8px;">
+                <h3 style="color: #28a745; margin-bottom: 10px;">📱 How to Login</h3>
+                <ol style="margin-left: 20px; color: #555;">
+                    <li>Enter your phone number (as registered with the school)</li>
+                    <li>Click Login to access your child's account</li>
+                    <li>View fees, payments, and account balance</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div class="container" id="dashboard-container" style="display: none;">
+        <div class="dashboard-section active">
+            <h1>👨‍👩‍👧‍👦 Parent Portal</h1>
+            <div class="portal-badge">Welcome, <span id="parent-name-display"></span></div>
+            
+            <!-- Student Information -->
+            <div class="info-card">
+                <h3>👨‍🎓 Student Information</h3>
+                <div class="info-row">
+                    <span class="info-label">Student ID:</span>
+                    <span class="info-value" id="student-id-display"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value" id="student-name-display"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Class:</span>
+                    <span class="info-value" id="student-class-display"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Gender:</span>
+                    <span class="info-value" id="student-gender-display"></span>
+                </div>
+            </div>
+
+            <!-- Account Balance -->
+            <div class="balance-card">
+                <div class="balance-label">Outstanding Balance</div>
+                <div class="balance-amount">₦<span id="balance-amount">0</span></div>
+                <div class="balance-label">Total Fee: ₦<span id="total-fee-amount">0</span> | Paid: ₦<span id="total-paid-amount">0</span></div>
+            </div>
+
+            <!-- Term Selection -->
+            <div class="info-card">
+                <h3>📅 Select Term</h3>
+                <div class="form-group">
+                    <select id="term-select">
+                        <option value="">-- Select Term --</option>
+                    </select>
+                </div>
+                <button onclick="loadTermDetails()">View Term Details</button>
+            </div>
+
+            <!-- Fee Structure -->
+            <div id="fee-structure-section" style="display: none;">
+                <h2>💰 Fee Structure</h2>
+                <table id="fee-structure-table">
+                    <thead>
+                        <tr>
+                            <th>Fee Item</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fee-structure-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- Payment History -->
+            <div id="payment-history-section" style="display: none;">
+                <h2>💳 Payment History</h2>
+                <table id="payment-history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-history-tbody"></tbody>
+                </table>
+            </div>
+
+            <button class="logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // IMPORTANT: Replace with your Google Apps Script URL
+        var scriptURL = 'https://script.google.com/macros/s/AKfycbxR2e44gYoXELURFHfN98Y8mkD18DFVIZgM0ocGW6vxXW3ta6OW3hwgv2Yo8aA_qX7C/exec';
+        
+        var currentStudent = null;
+        var currentParent = null;
+        var allTerms = [];
+        var allPayments = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSavedLogin();
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+        });
+
+        // Check for saved login
+        function checkSavedLogin() {
+            var savedData = localStorage.getItem('parentPortalData');
+            if (savedData) {
+                try {
+                    var data = JSON.parse(savedData);
+                    currentStudent = data.student;
+                    currentParent = data.parent;
+                    showDashboard();
+                } catch (e) {
+                    localStorage.removeItem('parentPortalData');
+                }
+            }
+        }
+
+        // Handle login
+        function handleLogin(e) {
+            e.preventDefault();
+            var phone = document.getElementById('parent-phone').value.trim();
+            var msg = document.getElementById('login-message');
+            
+            if (!phone) {
+                msg.className = 'error-msg';
+                msg.textContent = 'Please enter your phone number';
+                return;
+            }
+            
+            msg.className = 'info-msg';
+            msg.textContent = 'Searching for your account...';
+            
+            // Search for student by parent phone
+            makeJsonpRequest({
+                action: 'searchStudent',
+                query: phone
+            }, function(res) {
+                console.log('Search response:', res);
+                
+                if (res.success && res.students && res.students.length > 0) {
+                    // Found student(s) with this phone number
+                    var student = res.students[0]; // Take first match
+                    
+                    currentStudent = student;
+                    currentParent = {
+                        name: student.parentName,
+                        phone: phone
+                    };
+                    
+                    // Save to localStorage
+                    localStorage.setItem('parentPortalData', JSON.stringify({
+                        student: currentStudent,
+                        parent: currentParent
+                    }));
+                    
+                    msg.className = 'success-msg';
+                    msg.textContent = 'Login successful!';
+                    
+                    setTimeout(function() {
+                        showDashboard();
+                    }, 1000);
+                } else {
+                    msg.className = 'error-msg';
+                    msg.textContent = 'No student found with this phone number. Please contact the school office.';
+                }
+            });
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('dashboard-container').style.display = 'block';
+            
+            // Display student information
+            document.getElementById('parent-name-display').textContent = currentParent.name;
+            document.getElementById('student-id-display').textContent = currentStudent.id;
+            document.getElementById('student-name-display').textContent = currentStudent.name;
+            document.getElementById('student-class-display').textContent = currentStudent.class;
+            document.getElementById('student-gender-display').textContent = currentStudent.gender;
+            
+            // Load terms
+            loadTerms();
+            
+            // Load all payments for this student
+            loadAllPayments();
+        }
+
+        // Load terms
+        function loadTerms() {
+            makeJsonpRequest({
+                action: 'getTerms'
+            }, function(res) {
+                console.log('Terms response:', res);
+                
+                if (res.success && res.terms) {
+                    allTerms = res.terms;
+                    var select = document.getElementById('term-select');
+                    select.innerHTML = '<option value="">-- Select Term --</option>';
+                    
+                    res.terms.forEach(function(term) {
+                        var option = document.createElement('option');
+                        option.value = term.id;
+                        option.textContent = term.name + ' (' + term.academicYear + ')';
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // Load all payments for student
+        function loadAllPayments() {
+            makeJsonpRequest({
+                action: 'getReport',
+                termId: '',
+                reportType: 'payment_summary'
+            }, function(res) {
+                console.log('Payments response:', res);
+                // Store for later use
+            });
+        }
+
+        // Load term details
+        function loadTermDetails() {
+            var termId = document.getElementById('term-select').value;
+            
+            if (!termId) {
+                alert('Please select a term');
+                return;
+            }
+            
+            // Get student term fees
+            makeJsonpRequest({
+                action: 'getStudentTermFees',
+                studentID: currentStudent.id,
+                termId: termId
+            }, function(res) {
+                console.log('Student term fees response:', res);
+                
+                if (res.success) {
+                    displayFeeStructure(res.feeStructure);
+                    displayPaymentHistory(termId);
+                    updateBalance(res.feeStructure.total, res.amountPaid);
+                } else {
+                    alert(res.message || 'Error loading term details');
+                }
+            });
+        }
+
+        // Display fee structure
+        function displayFeeStructure(feeStructure) {
+            var tbody = document.getElementById('fee-structure-tbody');
+            tbody.innerHTML = '';
+            
+            var total = 0;
+            
+            for (var key in feeStructure) {
+                if (key !== 'id' && key !== 'total') {
+                    var tr = document.createElement('tr');
+                    
+                    var tdName = document.createElement('td');
+                    tdName.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+                    tr.appendChild(tdName);
+                    
+                    var tdAmount = document.createElement('td');
+                    var amount = parseFloat(feeStructure[key]) || 0;
+                    tdAmount.textContent = '₦' + amount.toLocaleString();
+                    tr.appendChild(tdAmount);
+                    
+                    tbody.appendChild(tr);
+                    total += amount;
+                }
+            }
+            
+            // Add total row
+            var trTotal = document.createElement('tr');
+            trTotal.style.fontWeight = 'bold';
+            trTotal.style.background = '#f8f9fa';
+            
+            var tdTotalLabel = document.createElement('td');
+            tdTotalLabel.textContent = 'TOTAL';
+            trTotal.appendChild(tdTotalLabel);
+            
+            var tdTotalAmount = document.createElement('td');
+            tdTotalAmount.textContent = '₦' + total.toLocaleString();
+            trTotal.appendChild(tdTotalAmount);
+            
+            tbody.appendChild(trTotal);
+            
+            document.getElementById('fee-structure-section').style.display = 'block';
+        }
+
+        // Display payment history
+        function displayPaymentHistory(termId) {
+            // Get payments from backend
+            makeJsonpRequest({
+                action: 'getReport',
+                termId: termId,
+                reportType: 'payment_summary'
+            }, function(res) {
+                console.log('Payment history response:', res);
+                
+                var tbody = document.getElementById('payment-history-tbody');
+                tbody.innerHTML = '';
+                
+                if (res.success && res.data) {
+                    var studentData = res.data.find(function(d) {
+                        return d.studentID === currentStudent.id;
+                    });
+                    
+                    if (studentData && studentData.amountPaid > 0) {
+                        // This is simplified - in real implementation, get actual payment records
+                        var tr = document.createElement('tr');
+                        
+                        var tdDate = document.createElement('td');
+                        tdDate.textContent = new Date().toLocaleDateString();
+                        tr.appendChild(tdDate);
+                        
+                        var tdAmount = document.createElement('td');
+                        tdAmount.textContent = '₦' + studentData.amountPaid.toLocaleString();
+                        tr.appendChild(tdAmount);
+                        
+                        var tdMethod = document.createElement('td');
+                        tdMethod.textContent = 'Various';
+                        tr.appendChild(tdMethod);
+                        
+                        var tdRef = document.createElement('td');
+                        tdRef.textContent = '-';
+                        tr.appendChild(tdRef);
+                        
+                        tbody.appendChild(tr);
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No payments recorded for this term</td></tr>';
+                    }
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No payment history available</td></tr>';
+                }
+                
+                document.getElementById('payment-history-section').style.display = 'block';
+            });
+        }
+
+        // Update balance display
+        function updateBalance(totalFee, amountPaid) {
+            var balance = totalFee - amountPaid;
+            
+            document.getElementById('total-fee-amount').textContent = totalFee.toLocaleString();
+            document.getElementById('total-paid-amount').textContent = amountPaid.toLocaleString();
+            document.getElementById('balance-amount').textContent = balance.toLocaleString();
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('parentPortalData');
+            location.reload();
+        }
+
+        // JSONP Helper
+        function makeJsonpRequest(params, callback) {
+            var cbName = 'jsonp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            var timeoutId;
+            
+            window[cbName] = function(data) { 
+                clearTimeout(timeoutId);
+                callback(data); 
+                delete window[cbName];
+                
+                var script = document.querySelector('script[src*="' + cbName + '"]');
+                if (script && document.head.contains(script)) {
+                    document.head.removeChild(script);
+                }
+            };
+            
+            var url = scriptURL + '?';
+            for (var key in params) {
+                if (params.hasOwnProperty(key)) {
+                    url += encodeURIComponent(key) + '=' + encodeURIComponent(params[key]) + '&';
+                }
+            }
+            url += 'callback=' + cbName;
+            
+            var script = document.createElement('script'); 
+            script.src = url;
+            script.onerror = function() {
+                clearTimeout(timeoutId);
+                callback({
+                    success: false, 
+                    message: 'Backend connection failed. Please check your internet connection.'
+                });
+                delete window[cbName];
+                if (document.head.contains(script)) {
+                    document.head.removeChild(script);
+                }
+            };
+            
+            document.head.appendChild(script);
+            
+            timeoutId = setTimeout(function() {
+                callback({
+                    success: false, 
+                    message: 'Request timeout. Please try again.'
+                });
+                delete window[cbName];
+                if (document.head.contains(script)) {
+                    document.head.removeChild(script);
+                }
+            }, 15000);
+        }
+    </script>
+</body>
+</html>
